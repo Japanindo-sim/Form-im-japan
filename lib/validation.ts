@@ -14,8 +14,9 @@ export const registrationSchema = z.object({
   tanggalAktivasi: z.string().min(1, "Tanggal Aktivasi wajib diisi"),
   pilihanPaket: z.string().min(1, "Pilihan Paket wajib diisi"),
   merkHp: z.string().min(1, "Merk & Tipe HP wajib diisi"),
-  jenisKartu: z.enum(["Kartu Fisik", "E-SIM"], {
-    errorMap: () => ({ message: "Jenis Kartu wajib dipilih" }),
+  jenisKartu: z.literal("Kartu Fisik").default("Kartu Fisik"),
+  metodePembayaran: z.enum(["Cash", "Transfer ke Rekening"], {
+    errorMap: () => ({ message: "Metode Pembayaran wajib dipilih" }),
   }),
   sumberInfo: z.string().min(1, "Sumber Info wajib diisi"),
   sumberInfoLainnya: z.string().optional(),

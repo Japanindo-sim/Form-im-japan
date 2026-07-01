@@ -38,10 +38,10 @@ function doPost(e) {
         "Timestamp", "Nama Lengkap", "NIK", "Nomor Paspor", "Tanggal Lahir", 
         "Alamat", "Email", "No WhatsApp", "LPK", "Tanggal Keberangkatan", 
         "Tanggal Aktivasi", "Pilihan Paket", "Merk HP", "Jenis Kartu",
-        "Sumber Informasi", "PIC", "Link Foto KTP", "Link Foto Paspor"
+        "Sumber Informasi", "PIC", "Metode Pembayaran", "Link Foto KTP", "Link Foto Paspor"
       ]);
       // Format header
-      sheet.getRange(1, 1, 1, 18).setFontWeight("bold").setBackground("#f3f3f3");
+      sheet.getRange(1, 1, 1, 19).setFontWeight("bold").setBackground("#f3f3f3");
     }
 
     sheet.appendRow([
@@ -61,6 +61,7 @@ function doPost(e) {
       data['Jenis Kartu'] || "",
       data['Sumber Informasi'] || "",
       data['PIC'] || "",
+      data['Metode Pembayaran'] || "",
       ktpUrl,
       pasporUrl
     ]);

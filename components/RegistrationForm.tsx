@@ -9,8 +9,6 @@ import DocumentScanner from "./DocumentScanner";
 export default function RegistrationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
-  const [showEsimModal, setShowEsimModal] = useState(false);
-  const [esimFeedback, setEsimFeedback] = useState<string | null>(null);
 
   const {
     register,
@@ -22,6 +20,7 @@ export default function RegistrationForm() {
     resolver: zodResolver(registrationSchema),
     defaultValues: {
       lpk: "IM JAPAN",
+      jenisKartu: "Kartu Fisik",
     }
   });
 
@@ -67,6 +66,7 @@ export default function RegistrationForm() {
       "Jenis Kartu": data.jenisKartu,
       "Sumber Informasi": showSumberInfoLainnya ? (data.sumberInfoLainnya || data.sumberInfo) : data.sumberInfo,
       "PIC": data.pic || "",
+      "Metode Pembayaran": data.metodePembayaran,
       "Foto KTP": formatImagePayload(data.fotoKtp, `KTP_${data.namaLengkap}`),
       "Foto Paspor": data.fotoPaspor ? formatImagePayload(data.fotoPaspor, `Paspor_${data.namaLengkap}`) : "",
     };
@@ -93,13 +93,41 @@ export default function RegistrationForm() {
   };
 
   if (submitStatus === "success") {
+    const isTransfer = watch("metodePembayaran") === "Transfer ke Rekening";
     return (
       <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl p-8 text-center mt-10 border border-green-100">
         <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
         </div>
         <h2 className="text-3xl font-bold text-gray-800 mb-4">Registrasi Berhasil!</h2>
-        <p className="text-gray-600 text-lg mb-8">Data Anda telah berhasil dikirim dan sedang kami proses.</p>
+        <p className="text-gray-600 text-lg mb-6">Data Anda telah berhasil dikirim dan sedang kami proses.</p>
+
+        {isTransfer && (
+          <div className="max-w-md mx-auto mb-8 bg-blue-50 border border-blue-200 rounded-xl p-6 text-left shadow-sm border-dashed">
+            <h3 className="text-md font-bold text-blue-900 mb-3 flex items-center">
+              <svg className="w-5 h-5 mr-2 text-blue-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Instruksi Pembayaran Transfer Rekening
+            </h3>
+            <p className="text-sm text-gray-700 mb-4">
+              Silakan lakukan pembayaran ke rekening berikut dan simpan bukti transfernya:
+            </p>
+            <div className="bg-white p-4 rounded-lg border border-blue-100 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 font-medium">Bank:</span>
+                <span className="text-gray-900 font-bold">Mandiri</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 font-medium">Nomor Rekening:</span>
+                <span className="text-gray-900 font-bold select-all font-mono">1670-0088-80-980</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 font-medium">Atas Nama:</span>
+                <span className="text-gray-900 font-bold">PT. JAPANINDO TRAVEL CONNECTION</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <button
           onClick={() => window.location.reload()}
           className="py-3 px-8 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition shadow-md hover:shadow-lg"
@@ -362,8 +390,8 @@ export default function RegistrationForm() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {[
-                  "20 GB Call Sim (Call dan Internet) (¥2.178/bulan)",
-                  "20 GB Data Sim (Internet Only) (¥2.178/bulan)",
+                  "Kuota 3GB Call & Internet",
+                  "Kuota 20GB Call & Internet",
                 ].map((paket) => (
                   <label key={paket} className={`flex items-start space-x-3 p-4 border rounded-xl cursor-pointer transition-all duration-200 ${watch("pilihanPaket") === paket ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"}`}>
                     <div className="flex items-center h-5">
@@ -375,8 +403,7 @@ export default function RegistrationForm() {
                       />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium text-gray-900 leading-tight">{paket.substring(0, paket.lastIndexOf(' ('))}</span>
-                      <span className="text-xs text-blue-600 font-semibold mt-1">{paket.substring(paket.lastIndexOf(' ('))}</span>
+                      <span className="text-sm font-medium text-gray-900 leading-tight">{paket}</span>
                     </div>
                   </label>
                 ))}
@@ -400,53 +427,7 @@ export default function RegistrationForm() {
               {errors.merkHp && <p className="mt-1.5 text-sm text-red-600 font-medium flex items-center"><svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>{errors.merkHp.message}</p>}
             </div>
 
-            <div className="border-t border-gray-100 pt-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Pilih Jenis Kartu <span className="text-red-500">*</span>
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className={`relative flex flex-col p-4 border rounded-xl cursor-pointer transition-all duration-200 ${watch("jenisKartu") === "Kartu Fisik" ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-bold text-gray-900">Kartu Fisik</span>
-                    <input
-                      type="radio"
-                      value="Kartu Fisik"
-                      {...register("jenisKartu", {
-                        onChange: (e) => {
-                          if (e.target.value === "Kartu Fisik") setEsimFeedback(null);
-                        }
-                      })}
-                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                    />
-                  </div>
-                  <span className="text-xs text-gray-600">Dikirim ke alamat (biaya ongkir berlaku)</span>
-                </label>
 
-                <label className={`relative flex flex-col p-4 border rounded-xl cursor-pointer transition-all duration-200 ${watch("jenisKartu") === "E-SIM" ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-bold text-gray-900">E-SIM</span>
-                    <input
-                      type="radio"
-                      value="E-SIM"
-                      {...register("jenisKartu", {
-                        onChange: (e) => {
-                          if (e.target.value === "E-SIM") setShowEsimModal(true);
-                        }
-                      })}
-                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                    />
-                  </div>
-                  <span className="text-xs text-gray-600">Dikirim secara digital & aktivasi instan</span>
-                </label>
-              </div>
-              {esimFeedback && (
-                <div className="mt-3 text-sm text-amber-600 bg-amber-50 p-3 rounded-lg flex items-center border border-amber-200 animate-in fade-in">
-                  <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  {esimFeedback}
-                </div>
-              )}
-              {errors.jenisKartu && <p className="mt-2 text-sm text-red-600 font-medium flex items-center"><svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>{errors.jenisKartu.message}</p>}
-            </div>
 
             <div className="border-t border-gray-100 pt-6">
               <label className="block text-sm font-semibold text-gray-700 mb-3">
@@ -555,6 +536,64 @@ export default function RegistrationForm() {
           </div>
         </div>
 
+        {/* Section 6: Metode Pembayaran */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-gray-50 border-b border-gray-100 px-6 py-4">
+            <h2 className="text-lg font-bold text-gray-800 flex items-center">
+              <span className="bg-blue-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs mr-3">6</span>
+              Metode Pembayaran
+            </h2>
+          </div>
+          <div className="p-6 space-y-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Pilih Metode Pembayaran <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label className={`relative flex flex-col p-4 border rounded-xl cursor-pointer transition-all duration-200 ${watch("metodePembayaran") === "Cash" ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-bold text-gray-900">Cash</span>
+                    <input
+                      type="radio"
+                      value="Cash"
+                      {...register("metodePembayaran")}
+                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                  </div>
+                  <span className="text-xs text-gray-600">Pembayaran tunai secara langsung</span>
+                </label>
+
+                <label className={`relative flex flex-col p-4 border rounded-xl cursor-pointer transition-all duration-200 ${watch("metodePembayaran") === "Transfer ke Rekening" ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-bold text-gray-900">Transfer ke Rekening</span>
+                    <input
+                      type="radio"
+                      value="Transfer ke Rekening"
+                      {...register("metodePembayaran")}
+                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                  </div>
+                  <span className="text-xs text-gray-600">Transfer bank ke rekening resmi PT. Japanindo Travel Connection</span>
+                </label>
+              </div>
+
+              {watch("metodePembayaran") === "Transfer ke Rekening" && (
+                <div className="mt-4 text-sm text-blue-800 bg-blue-50 p-4 rounded-xl border border-blue-200 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <p className="font-semibold mb-2">Instruksi Pembayaran Transfer Bank:</p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li>Bank: <strong>Mandiri</strong></li>
+                    <li>Nomor Rekening: <strong>1670-0088-80-980</strong></li>
+                    <li>Atas Nama: <strong>PT. JAPANINDO TRAVEL CONNECTION</strong></li>
+                    <li>Pastikan nominal transfer sesuai dan kirimkan bukti transfer ke PIC Anda setelah submit form ini.</li>
+                  </ul>
+                </div>
+              )}
+
+              {errors.metodePembayaran && <p className="mt-2 text-sm text-red-600 font-medium flex items-center"><svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>{errors.metodePembayaran.message}</p>}
+            </div>
+          </div>
+        </div>
+
         {/* Submit Button */}
         <div className="pt-6">
           <button
@@ -584,44 +623,6 @@ export default function RegistrationForm() {
         </div>
       </form>
 
-      {/* E-SIM Confirmation Modal */}
-      {showEsimModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 text-center">
-              <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Konfirmasi Perangkat</h3>
-              <p className="text-gray-600 mb-6">Apakah handphone Anda mendukung E-SIM?</p>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setValue("jenisKartu", "Kartu Fisik", { shouldValidate: true });
-                    setEsimFeedback("Perangkat tidak mendukung E-SIM, dialihkan ke Kartu Fisik.");
-                    setShowEsimModal(false);
-                  }}
-                  className="py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-xl transition"
-                >
-                  Tidak
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEsimFeedback(null);
-                    setShowEsimModal(false);
-                  }}
-                  className="py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition shadow-md"
-                >
-                  Ya, Mendukung
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
